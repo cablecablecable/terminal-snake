@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include "game_logic.h"
 
-int main() {
-    insertCharsToArray();
-    draw();
-}
+// int main() {
+//     insertCharsToArray();
+//     draw();
+// }
