@@ -1,65 +1,73 @@
 #include "game_logic.h"
 
-#include <array>
 #include <iostream>
 #include <vector>
 
+//some game rules
 constexpr int max_cols = 70;
-constexpr int max_rows = 20;
+constexpr int max_rows = 10;
 constexpr int max_apples = 20;
 
-//coordinate pair
+//coordinate pair struct, stores rows and columns obviously
 struct coord
 {
     int row{};
     int col{};
 };
 
+//operator== overload for comparing two coord structs
+bool operator==(const coord& lhs, const coord& rhs)
+{
+    return (lhs.row == rhs.row) && (lhs.col == rhs.col);
+}
+
+
 //array of actual characters to be printed
 char gameArray[max_rows][max_cols];
 
-//resizable array of apple coords of std::pairs
+//resizable array of apples stored in coord structs
 std::vector<coord> applesCollection;
 
-//resizable array of snake body parts of std::pairs
+//resizable array of snake body parts stored in coord structs
 std::vector<coord> snakeBodyCollection;
 
 //snake head location
 coord snakeHead;
 
 
-bool isApple(int row, int col)
+bool isApple(const coord& currentCoords)
 {
-    //for each coordinate pair in applesCollection, return true if the row AND col matches any pair
+    //for each coord in applesCollection, return true if the row AND col matches any coord
     for (const coord& appleCoords : applesCollection)
     {
-        if (appleCoords.row == row && appleCoords.col == col)
+        if (currentCoords == appleCoords)
             return true;
     }
     return false;
 }
 
-bool isSnakeBody(int row, int col)
+bool isSnakeBody(const coord& currentCoords)
 {
-    //for each coordinate pair in snakeBodyCollection, return true if the row AND col matches any pair
+    //for each coord in snakeBodyCollection, return true if the row AND col matches any coord
     for (const coord& bodyCoords : snakeBodyCollection)
     {
-        if (bodyCoords.row == row && bodyCoords.col == col)
+        if (currentCoords == bodyCoords)
             return true;
     }
     return false;
 }
 
-bool isSnakeHead(int row, int col)
+bool isSnakeHead(const coord& currentCoords)
 {
     //return true if arguments match snakeHead's row AND column
-    return (snakeHead.row == row) && (snakeHead.col == col);
+    return currentCoords == snakeHead;
 }
 
-bool isEdge(int row, int col)
+bool isEdge(const coord& currentCoords)
 {
     //return true if row/col equals 0, OR(inclusive) equals max_rows
-    return (row == 0 || row == max_rows - 1) || (col == 0 || col == max_cols - 1);
+    return (currentCoords.row == 0 || currentCoords.row == max_rows - 1) ||
+           (currentCoords.col == 0 || currentCoords.col == max_cols - 1);
 }
 
 void insertCharsToArray()
@@ -69,11 +77,13 @@ void insertCharsToArray()
     {
         for (int j = 0; j < max_cols; j++)
         {
-            if      (isEdge(i, j))      { gameArray[i][j] = '#'; }
-            else if (isApple(i, j))     { gameArray[i][j] = '@'; }
-            else if (isSnakeHead(i, j)) { gameArray[i][j] = '%'; }
-            else if (isSnakeBody(i, j)) { gameArray[i][j] = 'O'; }
-            else                                { gameArray[i][j] = ' '; }
+            //store the current coords into the coord struct for easy and fast pass by reference
+            coord currentCoords = {i, j};
+            if      (isEdge(currentCoords))      { gameArray[i][j] = '#'; }
+            else if (isApple(currentCoords))     { gameArray[i][j] = '@'; }
+            else if (isSnakeHead(currentCoords)) { gameArray[i][j] = '%'; }
+            else if (isSnakeBody(currentCoords)) { gameArray[i][j] = 'O'; }
+            else                                 { gameArray[i][j] = ' '; }
         }
     }
 }
@@ -94,12 +104,20 @@ void draw()
 
 int main()
 {
-    snakeBodyCollection.emplace_back(15, 20);
-    snakeBodyCollection.emplace_back(15, 21);
-    snakeBodyCollection.emplace_back(15, 22);
+    snakeBodyCollection.emplace_back(5, 20);
+    snakeBodyCollection.emplace_back(6, 21);
+    snakeBodyCollection.emplace_back(7, 22);
     snakeHead = {5, 10};
     applesCollection.emplace_back(8, 45);
 
+
     insertCharsToArray();
     draw();
+
+    coord foo = {5, 5};
+    coord bar = {5, 6};
+
+    (foo == bar) ? std::cout << "true" : std::cout << "false";
+
+
 }
