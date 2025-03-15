@@ -8,26 +8,32 @@ constexpr int max_cols = 70;
 constexpr int max_rows = 20;
 constexpr int max_apples = 20;
 
+//coordinate pair
+struct coord
+{
+    int row{};
+    int col{};
+};
+
 //array of actual characters to be printed
 char gameArray[max_rows][max_cols];
 
 //resizable array of apple coords of std::pairs
-std::vector<std::pair<int, int>> applesCollection;
+std::vector<coord> applesCollection;
 
 //resizable array of snake body parts of std::pairs
-std::vector<std::pair<int, int>> snakeBodyCollection;
+std::vector<coord> snakeBodyCollection;
 
 //snake head location
-std::pair<int, int> snakeHead;
-
+coord snakeHead;
 
 
 bool isApple(int row, int col)
 {
     //for each coordinate pair in applesCollection, return true if the row AND col matches any pair
-    for (std::pair<int, int>& appleCoords : applesCollection)
+    for (const coord& appleCoords : applesCollection)
     {
-        if (appleCoords.first == row && appleCoords.second == col)
+        if (appleCoords.row == row && appleCoords.col == col)
             return true;
     }
     return false;
@@ -36,9 +42,9 @@ bool isApple(int row, int col)
 bool isSnakeBody(int row, int col)
 {
     //for each coordinate pair in snakeBodyCollection, return true if the row AND col matches any pair
-    for (std::pair<int, int>& bodyCoords : snakeBodyCollection)
+    for (const coord& bodyCoords : snakeBodyCollection)
     {
-        if (bodyCoords.first == row && bodyCoords.second == col)
+        if (bodyCoords.row == row && bodyCoords.col == col)
             return true;
     }
     return false;
@@ -47,7 +53,7 @@ bool isSnakeBody(int row, int col)
 bool isSnakeHead(int row, int col)
 {
     //return true if arguments match snakeHead's row AND column
-    return (snakeHead.first == row) && (snakeHead.second == col);
+    return (snakeHead.row == row) && (snakeHead.col == col);
 }
 
 bool isEdge(int row, int col)
