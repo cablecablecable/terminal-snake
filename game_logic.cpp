@@ -38,18 +38,10 @@ std::vector<coord> snake_body_collection;
 coord snake_head;
 
 
-int random_number(int min, int max)
-{
-    static std::random_device randomDevice;
-    static std::mt19937 gen(randomDevice());
-    static std::uniform_int_distribution<> dist(min, max);
-    return dist(gen);
-}
-
 bool is_apple(const coord& current_coord)
 {
     //for each coord in applesCollection, return true if the row AND col matches any coord
-    for (coord& appleCoords : apples_collection)
+    for (coord appleCoords : apples_collection)
     {
         if (current_coord == appleCoords)
             return true;
@@ -60,7 +52,7 @@ bool is_apple(const coord& current_coord)
 bool is_snake_body(const coord& current_coord)
 {
     //for each coord in snakeBodyCollection, return true if the row AND col matches any coord
-    for (const coord& bodyCoords : snake_body_collection)
+    for (coord bodyCoords : snake_body_collection)
     {
         if (current_coord == bodyCoords)
             return true;
@@ -76,25 +68,43 @@ bool is_snake_head(const coord& current_coord)
 
 bool is_edge(const coord& current_coord)
 {
-    //return true if row/col equals 0, OR(inclusive) equals max_rows
+    //return true if row/col equals 0, OR equals max_rows
     return (current_coord.row == 0 || current_coord.row == MAX_ROWS - 1) ||
            (current_coord.col == 0 || current_coord.col == MAX_COLS - 1);
 }
 
-coord generate_unique_apple()
+int random_number(int min, int max)
 {
-    //infinitely loops until a unique apple is generated
+    static std::random_device randomDevice;
+    static std::mt19937 gen(randomDevice());
+    std::uniform_int_distribution<> distribution(min, max);
+    return distribution(gen);
+}
+
+coord generate_apple()
+{
+    //infinitely loops until an apple of unique coords is generated
     coord new_apple;
     while (true)
     {
         //random number bounded to prevent edge generation altogether
-        new_apple = {random_number(1, MAX_ROWS - 1), random_number(1, MAX_COLS - 1)};
+        new_apple = { random_number(1, MAX_ROWS - 2), random_number(1, MAX_COLS - 2) };
 
         //if new_apple is not equal to an existing apple, snake body, and snake head, break the loop and return it
-        if (!(is_apple(new_apple) && is_snake_body(new_apple) && is_snake_head(new_apple)))
+        if (!(is_apple(new_apple)) && !(is_snake_body(new_apple)) && !(is_snake_head(new_apple)))
             break;
     }
     return new_apple;
+}
+
+void insert_apples()
+{
+    //generates and inserts apples into apples_collection until apple_count == MAX_APPLES
+    while (apple_count < MAX_APPLES)
+    {
+        apples_collection.emplace_back(generate_apple());
+        apple_count = static_cast<int>(apples_collection.size());
+    }
 }
 
 void insert_chars()
@@ -106,11 +116,11 @@ void insert_chars()
         {
             //store the current coords into the coord struct for easy and fast pass by reference
             coord current_coord = {i, j};
-            if      (is_edge(current_coord))      { game_array[i][j] = '*'; }
-            else if (is_apple(current_coord))     { game_array[i][j] = '@'; }
+            if      (is_edge(current_coord))       { game_array[i][j] = '*'; }
+            else if (is_apple(current_coord))      { game_array[i][j] = '@'; }
             else if (is_snake_head(current_coord)) { game_array[i][j] = '%'; }
             else if (is_snake_body(current_coord)) { game_array[i][j] = 'O'; }
-            else                                 { game_array[i][j] = ' '; }
+            else                                   { game_array[i][j] = ' '; }
         }
     }
 }
@@ -139,17 +149,12 @@ int main()
     snake_body_collection.emplace_back(5, 25);
     snake_head = {5, 19};
 
-    apples_collection.emplace_back(8, 45);
+    insert_apples();
+
 
 
     insert_chars();
     draw();
 
-    coord foo = {5, 5};
-    coord bar = {5, 6};
-
-    (foo == bar) ? std::cout << "true" : std::cout << "false";
-
-    generateApples();
 
 }
