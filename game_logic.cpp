@@ -3,13 +3,16 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <string>
 
-//some game rules
+//game constants
 constexpr int MAX_COLS = 70;
 constexpr int MAX_ROWS = 10;
-constexpr int MAX_APPLES = 20;
+constexpr int MAX_APPLES = 20; //538 is the max for now
 
+//important game variables
 int apple_count;
+std::string direction;
 
 //coordinate pair struct, stores rows and columns obviously
 struct coord
@@ -31,19 +34,16 @@ char game_array[MAX_ROWS][MAX_COLS];
 //resizable array of apples stored in coord structs
 std::vector<coord> apples_collection;
 
-//resizable array of snake body parts stored in coord structs
-std::vector<coord> snake_body_collection;
-
-//snake head location
-coord snake_head;
+//resizable array of snake parts stored in coord structs
+std::vector<coord> snake_parts_collection;
 
 
 bool is_apple(const coord& current_coord)
 {
-    //for each coord in applesCollection, return true if the row AND col matches any coord
-    for (coord appleCoords : apples_collection)
+    //for each apple_collection element, return true if current_coord matches
+    for (coord apple_coord : apples_collection)
     {
-        if (current_coord == appleCoords)
+        if (current_coord == apple_coord)
             return true;
     }
     return false;
@@ -51,10 +51,10 @@ bool is_apple(const coord& current_coord)
 
 bool is_snake_body(const coord& current_coord)
 {
-    //for each coord in snakeBodyCollection, return true if the row AND col matches any coord
-    for (coord bodyCoords : snake_body_collection)
+    //for each snake_parts_collection element, return true if current_coord matches
+    for (coord part_coord : snake_parts_collection)
     {
-        if (current_coord == bodyCoords)
+        if (current_coord == part_coord)
             return true;
     }
     return false;
@@ -62,8 +62,8 @@ bool is_snake_body(const coord& current_coord)
 
 bool is_snake_head(const coord& current_coord)
 {
-    //return true if arguments match snakeHead's row AND column
-    return current_coord == snake_head;
+    //return true if the current coord is equal to the head of the snake that is always snake_parts_collection[0]
+    return current_coord == snake_parts_collection[0];
 }
 
 bool is_edge(const coord& current_coord)
@@ -75,8 +75,8 @@ bool is_edge(const coord& current_coord)
 
 int random_number(int min, int max)
 {
-    static std::random_device randomDevice;
-    static std::mt19937 gen(randomDevice());
+    static std::random_device random_device;
+    static std::mt19937 gen(random_device());
     std::uniform_int_distribution<> distribution(min, max);
     return distribution(gen);
 }
@@ -105,6 +105,29 @@ void insert_apples()
         apples_collection.emplace_back(generate_apple());
         apple_count = static_cast<int>(apples_collection.size());
     }
+}
+
+void direction_input()
+{
+    std::cout << "\nDirection (wasd): ";
+    char user_input;
+    std::cin >> user_input;
+
+    switch (user_input)
+    {
+        case 'w': { direction = "UP";    break;}
+        case 'a': { direction = "LEFT";  break;}
+        case 's': { direction = "DOWN";  break;}
+        case 'd': { direction = "RIGHT"; break;}
+        default:  { break; }
+    }
+}
+
+
+
+void init()
+{
+    direction = "LEFT";
 }
 
 void insert_chars()
@@ -141,13 +164,13 @@ void draw()
 
 int main()
 {
-    snake_body_collection.emplace_back(5, 20);
-    snake_body_collection.emplace_back(5, 21);
-    snake_body_collection.emplace_back(5, 22);
-    snake_body_collection.emplace_back(5, 23);
-    snake_body_collection.emplace_back(5, 24);
-    snake_body_collection.emplace_back(5, 25);
-    snake_head = {5, 19};
+    snake_parts_collection.emplace_back(5, 19);
+    snake_parts_collection.emplace_back(5, 20);
+    snake_parts_collection.emplace_back(5, 21);
+    snake_parts_collection.emplace_back(5, 22);
+    snake_parts_collection.emplace_back(5, 23);
+    snake_parts_collection.emplace_back(5, 24);
+    snake_parts_collection.emplace_back(5, 25);
 
     insert_apples();
 
