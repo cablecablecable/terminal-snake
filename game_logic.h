@@ -1,7 +1,7 @@
 #ifndef GAME_LOGIC_H
 #define GAME_LOGIC_H
 
-void insertCharsToArray();
+void insert_chars();
 void draw();
 
 

@@ -2,11 +2,14 @@
 
 #include <iostream>
 #include <vector>
+#include <random>
 
 //some game rules
-constexpr int max_cols = 70;
-constexpr int max_rows = 10;
-constexpr int max_apples = 20;
+constexpr int MAX_COLS = 70;
+constexpr int MAX_ROWS = 10;
+constexpr int MAX_APPLES = 20;
+
+int apple_count;
 
 //coordinate pair struct, stores rows and columns obviously
 struct coord
@@ -23,67 +26,91 @@ bool operator==(const coord& lhs, const coord& rhs)
 
 
 //array of actual characters to be printed
-char gameArray[max_rows][max_cols];
+char game_array[MAX_ROWS][MAX_COLS];
 
 //resizable array of apples stored in coord structs
-std::vector<coord> applesCollection;
+std::vector<coord> apples_collection;
 
 //resizable array of snake body parts stored in coord structs
-std::vector<coord> snakeBodyCollection;
+std::vector<coord> snake_body_collection;
 
 //snake head location
-coord snakeHead;
+coord snake_head;
 
 
-bool isApple(const coord& currentCoords)
+int random_number(int min, int max)
+{
+    static std::random_device randomDevice;
+    static std::mt19937 gen(randomDevice());
+    static std::uniform_int_distribution<> dist(min, max);
+    return dist(gen);
+}
+
+bool is_apple(const coord& current_coord)
 {
     //for each coord in applesCollection, return true if the row AND col matches any coord
-    for (const coord& appleCoords : applesCollection)
+    for (coord& appleCoords : apples_collection)
     {
-        if (currentCoords == appleCoords)
+        if (current_coord == appleCoords)
             return true;
     }
     return false;
 }
 
-bool isSnakeBody(const coord& currentCoords)
+bool is_snake_body(const coord& current_coord)
 {
     //for each coord in snakeBodyCollection, return true if the row AND col matches any coord
-    for (const coord& bodyCoords : snakeBodyCollection)
+    for (const coord& bodyCoords : snake_body_collection)
     {
-        if (currentCoords == bodyCoords)
+        if (current_coord == bodyCoords)
             return true;
     }
     return false;
 }
 
-bool isSnakeHead(const coord& currentCoords)
+bool is_snake_head(const coord& current_coord)
 {
     //return true if arguments match snakeHead's row AND column
-    return currentCoords == snakeHead;
+    return current_coord == snake_head;
 }
 
-bool isEdge(const coord& currentCoords)
+bool is_edge(const coord& current_coord)
 {
     //return true if row/col equals 0, OR(inclusive) equals max_rows
-    return (currentCoords.row == 0 || currentCoords.row == max_rows - 1) ||
-           (currentCoords.col == 0 || currentCoords.col == max_cols - 1);
+    return (current_coord.row == 0 || current_coord.row == MAX_ROWS - 1) ||
+           (current_coord.col == 0 || current_coord.col == MAX_COLS - 1);
 }
 
-void insertCharsToArray()
+coord generate_unique_apple()
+{
+    //infinitely loops until a unique apple is generated
+    coord new_apple;
+    while (true)
+    {
+        //random number bounded to prevent edge generation altogether
+        new_apple = {random_number(1, MAX_ROWS - 1), random_number(1, MAX_COLS - 1)};
+
+        //if new_apple is not equal to an existing apple, snake body, and snake head, break the loop and return it
+        if (!(is_apple(new_apple) && is_snake_body(new_apple) && is_snake_head(new_apple)))
+            break;
+    }
+    return new_apple;
+}
+
+void insert_chars()
 {
     //for each row in gameArray, insert into every column a char based on what it is determined by function calls
-    for (int i = 0; i < max_rows; i++)
+    for (int i = 0; i < MAX_ROWS; i++)
     {
-        for (int j = 0; j < max_cols; j++)
+        for (int j = 0; j < MAX_COLS; j++)
         {
             //store the current coords into the coord struct for easy and fast pass by reference
-            coord currentCoords = {i, j};
-            if      (isEdge(currentCoords))      { gameArray[i][j] = '#'; }
-            else if (isApple(currentCoords))     { gameArray[i][j] = '@'; }
-            else if (isSnakeHead(currentCoords)) { gameArray[i][j] = '%'; }
-            else if (isSnakeBody(currentCoords)) { gameArray[i][j] = 'O'; }
-            else                                 { gameArray[i][j] = ' '; }
+            coord current_coord = {i, j};
+            if      (is_edge(current_coord))      { game_array[i][j] = '*'; }
+            else if (is_apple(current_coord))     { game_array[i][j] = '@'; }
+            else if (is_snake_head(current_coord)) { game_array[i][j] = '%'; }
+            else if (is_snake_body(current_coord)) { game_array[i][j] = 'O'; }
+            else                                 { game_array[i][j] = ' '; }
         }
     }
 }
@@ -92,11 +119,11 @@ void draw()
 {
     //draw everything to the terminal
     //for each row in gameArray, print every column: gameArray[row][column]
-    for (int i = 0; i < max_rows; i++)
+    for (int i = 0; i < MAX_ROWS; i++)
     {
-        for (int j = 0; j < max_cols; j++)
+        for (int j = 0; j < MAX_COLS; j++)
         {
-            std::cout << gameArray[i][j];
+            std::cout << game_array[i][j];
         }
         std::cout << "\n"; //newline after each row is drawn
     }
@@ -104,14 +131,18 @@ void draw()
 
 int main()
 {
-    snakeBodyCollection.emplace_back(5, 20);
-    snakeBodyCollection.emplace_back(6, 21);
-    snakeBodyCollection.emplace_back(7, 22);
-    snakeHead = {5, 10};
-    applesCollection.emplace_back(8, 45);
+    snake_body_collection.emplace_back(5, 20);
+    snake_body_collection.emplace_back(5, 21);
+    snake_body_collection.emplace_back(5, 22);
+    snake_body_collection.emplace_back(5, 23);
+    snake_body_collection.emplace_back(5, 24);
+    snake_body_collection.emplace_back(5, 25);
+    snake_head = {5, 19};
+
+    apples_collection.emplace_back(8, 45);
 
 
-    insertCharsToArray();
+    insert_chars();
     draw();
 
     coord foo = {5, 5};
@@ -119,5 +150,6 @@ int main()
 
     (foo == bar) ? std::cout << "true" : std::cout << "false";
 
+    generateApples();
 
 }
