@@ -1,5 +1,6 @@
 #include "game_logic.h"
 
+#include <deque>
 #include <iostream>
 #include <vector>
 #include <random>
@@ -12,7 +13,7 @@ constexpr int MAX_APPLES = 20; //538 is the max for now
 
 //important game variables
 int apple_count;
-std::string direction;
+char direction;
 
 //coordinate pair struct, stores rows and columns obviously
 struct coord
@@ -36,6 +37,7 @@ std::vector<coord> apples_collection;
 
 //resizable array of snake parts stored in coord structs
 std::vector<coord> snake_parts_collection;
+
 
 
 bool is_apple(const coord& current_coord)
@@ -75,6 +77,7 @@ bool is_edge(const coord& current_coord)
 
 int random_number(int min, int max)
 {
+    //seed the PRNG mt19937 with a random device at runtime then return that from a range of min-max
     static std::random_device random_device;
     static std::mt19937 gen(random_device());
     std::uniform_int_distribution<> distribution(min, max);
@@ -87,19 +90,20 @@ coord generate_apple()
     coord new_apple;
     while (true)
     {
-        //random number bounded to prevent edge generation altogether
+        //random number bounded to prevent edge generation altogether, MAX - 2 because arrays are 0 indexed,
+        //so a MAX_COL of 70 has coordinates of 0-69 so the center of that is 1-68
         new_apple = { random_number(1, MAX_ROWS - 2), random_number(1, MAX_COLS - 2) };
 
-        //if new_apple is not equal to an existing apple, snake body, and snake head, break the loop and return it
+        //if new_apple is not equal to an existing apple and snake part, break the loop and return it
         if (!(is_apple(new_apple)) && !(is_snake_body(new_apple)) && !(is_snake_head(new_apple)))
             break;
     }
     return new_apple;
 }
 
-void insert_apples()
+void insert_generated_apples()
 {
-    //generates and inserts apples into apples_collection until apple_count == MAX_APPLES
+    //generates and inserts apples into apples_collection until the apple_count is maximized
     while (apple_count < MAX_APPLES)
     {
         apples_collection.emplace_back(generate_apple());
@@ -107,37 +111,85 @@ void insert_apples()
     }
 }
 
-void direction_input()
+void ask_for_direction()
 {
+    //obtain a user input for direction after each turn by assigning to the direction string
     std::cout << "\nDirection (wasd): ";
     char user_input;
     std::cin >> user_input;
 
     switch (user_input)
     {
-        case 'w': { direction = "UP";    break;}
-        case 'a': { direction = "LEFT";  break;}
-        case 's': { direction = "DOWN";  break;}
-        case 'd': { direction = "RIGHT"; break;}
+        case 'w': { direction = 'w';    break;}
+        case 'a': { direction = 'a';  break;}
+        case 's': { direction = 's';  break;}
+        case 'd': { direction = 'd'; break;}
         default:  { break; }
+    }
+}
+
+void move_snake()
+{
+    const auto snake_head_position = snake_parts_collection.begin() + 0;
+    coord old_snake_head = snake_parts_collection[0];
+
+    //remove the old tail of the snake
+    snake_parts_collection.pop_back();
+
+    //now inserting a new head effectively makes it move one position in the game grid
+    //this is based off of what the direction is currently specified
+    switch (direction)
+    {
+        case 'w':
+        {
+            snake_parts_collection.insert(snake_head_position,
+                {old_snake_head.row - 1, old_snake_head.col});
+            break;
+        }
+        case 'a':
+        {
+            snake_parts_collection.insert(snake_head_position,
+                {old_snake_head.row, old_snake_head.col - 1});
+            break;
+        }
+        case 's':
+        {
+            snake_parts_collection.insert(snake_head_position,
+                {old_snake_head.row + 1, old_snake_head.col});
+            break;
+        }
+        case 'd':
+        {
+            snake_parts_collection.insert(snake_head_position,
+                {old_snake_head.row, old_snake_head.col + 1});
+            break;
+        }
+        default:
+        {
+            break;
+        }
     }
 }
 
 
 
-void init()
+
+void game_init()
 {
-    direction = "LEFT";
+    //set the initial direction to be moving left
+    direction = 'a';
+    snake_parts_collection.emplace_back(5, 34);
+    snake_parts_collection.emplace_back(5,35);
 }
 
-void insert_chars()
+void insert_to_game_array()
 {
-    //for each row in gameArray, insert into every column a char based on what it is determined by function calls
+    //for each row in game_array, insert into every column a char based on what it is determined by function calls
     for (int i = 0; i < MAX_ROWS; i++)
     {
         for (int j = 0; j < MAX_COLS; j++)
         {
-            //store the current coords into the coord struct for easy and fast pass by reference
+            //store the current coords into the coord struct for inexpensive pass by ref into the is_ functions
             coord current_coord = {i, j};
             if      (is_edge(current_coord))       { game_array[i][j] = '*'; }
             else if (is_apple(current_coord))      { game_array[i][j] = '@'; }
@@ -148,7 +200,7 @@ void insert_chars()
     }
 }
 
-void draw()
+void draw_game_array()
 {
     //draw everything to the terminal
     //for each row in gameArray, print every column: gameArray[row][column]
@@ -164,20 +216,20 @@ void draw()
 
 int main()
 {
-    snake_parts_collection.emplace_back(5, 19);
-    snake_parts_collection.emplace_back(5, 20);
-    snake_parts_collection.emplace_back(5, 21);
-    snake_parts_collection.emplace_back(5, 22);
-    snake_parts_collection.emplace_back(5, 23);
-    snake_parts_collection.emplace_back(5, 24);
-    snake_parts_collection.emplace_back(5, 25);
+    game_init();
 
-    insert_apples();
+    insert_generated_apples();
 
+    insert_to_game_array();
+    draw_game_array();
 
+    while (true)
+    {
+        ask_for_direction();
+        move_snake();
 
-    insert_chars();
-    draw();
-
+        insert_to_game_array();
+        draw_game_array();
+    }
 
 }
