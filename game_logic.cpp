@@ -97,8 +97,8 @@ coord generate_apple()
     while (true)
     {
         //random number bounded to prevent edge generation altogether, MAX - 3 because arrays are 0 indexed,
-        //so a MAX_COL of 70 has coordinates of 0-69 so the center of that is 1-68
-        new_apple = { random_number(2, MAX_ROWS - 3), random_number(2, MAX_COLS - 3) };
+        //i.e. a MAX_COL of 70 has coordinates of 0-69 so the center of that is 1-68
+        new_apple = { random_number(1, MAX_ROWS - 2), random_number(1, MAX_COLS - 2) };
 
         //if new_apple is not equal to an existing apple and snake part, break the loop and return it
         if (!(is_apple(new_apple)) && !(is_snake_body(new_apple)) && !(is_snake_head(new_apple)))
