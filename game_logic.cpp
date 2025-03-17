@@ -19,14 +19,15 @@ bool operator==(const coord& lhs, const coord& rhs)
 }
 
 //game constants
-constexpr int MAX_COLS = 20;
-constexpr int MAX_ROWS = 10;
-constexpr int MAX_APPLES = 2;
+constexpr int MAX_COLS = 10;
+constexpr int MAX_ROWS = 6;
+constexpr int MAX_APPLES = 1;
 
 //important game variables
 int apple_count;
 char direction;
 coord old_snake_tail;
+int apples_eaten;
 
 
 //array of actual characters to be printed
@@ -46,10 +47,10 @@ bool is_snake_head(const coord& current_coord)
 
 bool is_snake_body(const coord& current_coord)
 {
-    //for each snake_parts_collection element, return true if current_coord matches
-    for (coord part_coord : snake_parts_collection)
+    //for each snake_parts_collection element above index 0, return true if current_coord matches
+    for (int i = 1; i < snake_parts_collection.size(); i++)
     {
-        if (current_coord == part_coord)
+        if (current_coord == snake_parts_collection[i])
             return true;
     }
     return false;
@@ -107,8 +108,13 @@ coord generate_apple()
     return new_apple;
 }
 
+bool check_game_win();
 void insert_generated_apples()
 {
+    //early check if game win condition has been met so it doesn't get stuck in an infinite loop
+    if (check_game_win())
+        return;
+
     //generate and insert an apple if apple_count is less than MAX_APPLES, then update apple count
     while (apple_count < MAX_APPLES)
     {
@@ -144,12 +150,20 @@ void ask_for_direction()
     }
 }
 
-void snake_insert_new_head()
+void snake_move()
 {
+    //store old tail location before removing (important for snake_eat)
+    old_snake_tail = snake_parts_collection.back();
+
+    //remove the old tail of the snake
+    snake_parts_collection.pop_back();
+
+    //abstraction for improved code readability
     const auto snake_head_position = snake_parts_collection.begin() + 0;
     coord old_snake_head = snake_parts_collection[0];
 
     //insert new head based off old_snake_head and what the direction is currently specified as
+    //now inserting a new head essentially moves the snake one tile in the game grid
     switch (direction)
     {
         case 'w':
@@ -183,18 +197,6 @@ void snake_insert_new_head()
     }
 }
 
-void snake_move()
-{
-    //store old tail location before removing (important for snake_eat)
-    old_snake_tail = snake_parts_collection.back();
-
-    //remove the old tail of the snake
-    snake_parts_collection.pop_back();
-
-    //now inserting a new head essentially moves the one tile in the game grid
-    snake_insert_new_head();
-}
-
 void snake_eat()
 {
     //the is_apple function will recognize that it is the snake head and will remove that apple from the array
@@ -203,6 +205,7 @@ void snake_eat()
         //replace that previous "ghost" snake tail
         snake_parts_collection.emplace_back(old_snake_tail);
         apple_count = static_cast<int>(apples_collection.size());
+        apples_eaten++;
     }
 }
 
@@ -212,10 +215,10 @@ void game_init()
     direction = 'a';
     constexpr int MIDDLE_ROW = MAX_ROWS / 2;
     constexpr int MIDDLE_COL = MAX_COLS / 2;
+    apples_eaten = 0;
 
     snake_parts_collection.emplace_back(MIDDLE_ROW, MIDDLE_COL);
     snake_parts_collection.emplace_back(MIDDLE_ROW, MIDDLE_COL + 1);
-    snake_parts_collection.emplace_back(MIDDLE_ROW, MIDDLE_COL + 2);
 }
 
 void draw_game_array()
@@ -225,19 +228,18 @@ void draw_game_array()
     {
         for (int j = 0; j < MAX_COLS; j++)
         {
-            //store the current coords into the coord struct for inexpensive pass by ref into the is_ functions
+            //store the current coords into the coord struct for pass by ref into the is_ functions
             coord current_coord = {i, j};
-            if      (is_edge(current_coord))       { game_array[i][j] = '#'; }
-            else if (is_apple(current_coord))      { game_array[i][j] = '@'; }
-            else if (is_snake_head(current_coord)) { game_array[i][j] = '%'; }
+            if      (is_edge(current_coord))       { game_array[i][j] = '*'; }
+            else if (is_apple(current_coord))      { game_array[i][j] = '$'; }
+            else if (is_snake_head(current_coord)) { game_array[i][j] = '@'; }
             else if (is_snake_body(current_coord)) { game_array[i][j] = 'O'; }
             else                                   { game_array[i][j] = ' '; }
         }
     }
 
-
     //draw everything to the terminal
-    //for each row in gameArray, print every column: gameArray[row][column]
+    //for each row in game_array, print every column: game_array[row][column]
     for (int i = 0; i < MAX_ROWS; i++)
     {
         for (int j = 0; j < MAX_COLS; j++)
@@ -248,23 +250,24 @@ void draw_game_array()
     }
 }
 
-int main()
+bool check_game_lose()
 {
-    game_init();
+    coord snake_head = snake_parts_collection[0];
 
-    insert_generated_apples();
+    if (is_edge(snake_head) || (is_snake_body(snake_head)))
+        return true;
+    return false;
+}
 
-    draw_game_array();
+bool check_game_win()
+{
+    constexpr int grid_area_minus_edges = (MAX_ROWS - 2) * (MAX_COLS -2);
+    if (snake_parts_collection.size() == grid_area_minus_edges)
+        return true;
+    return false;
+}
 
-    while (true)
-    {
-        ask_for_direction();
-        snake_move();
-        snake_eat();
-
-        insert_generated_apples();
-
-        draw_game_array();
-    }
-
+void print_apples_eaten()
+{
+    std::cout << "Apples eaten: " << apples_eaten << std::endl;
 }
